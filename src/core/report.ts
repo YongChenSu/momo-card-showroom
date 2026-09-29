@@ -13,6 +13,9 @@ export type ReportCode =
   | 'config.invalid-update'
   | 'config.invalid-attribute'
   | 'config.persist-failed'
+  | 'element.invalid-json'
+  | 'element.invalid-product'
+  | 'element.unknown-variant'
 
 export type ReportEvent = {
   code: ReportCode

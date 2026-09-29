@@ -1,0 +1,90 @@
+.card--grid {
+  border: 1px solid #eee;
+}
+
+.card--grid .card__slot--top-left {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.card--grid .card__slot--top-left .badge {
+  border-radius: 0 0 4px 0;
+  padding: 2px 6px;
+}
+
+.card--grid .card__slot--bottom-left {
+  position: absolute;
+  left: 4px;
+  bottom: 4px;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.card--grid .card__slot--bottom-right {
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+}
+
+.card--grid .card__slot--bottom-right .badge {
+  background: rgb(0 0 0 / 0.35);
+}
+
+.card--grid .card__slot--title {
+  display: inline-flex;
+  margin-right: 4px;
+  vertical-align: 1px;
+}
+
+.card__dots {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px 0 0;
+}
+
+.card__dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #ddd;
+}
+
+.card__dot--active {
+  background: var(--card-price-color);
+}
+
+.card--grid .card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 10px 12px;
+}
+
+.card__promo {
+  margin: 0;
+  font-size: 12px;
+  color: #e60012;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card__rating {
+  margin: 0;
+  font-size: 12px;
+  color: #999;
+}
+
+.card__stars {
+  color: #f5a623;
+  letter-spacing: -1px;
+  margin-right: 4px;
+}
+
+.card__sold {
+  margin: 0;
+  font-size: 11px;
+  color: #666;
+}

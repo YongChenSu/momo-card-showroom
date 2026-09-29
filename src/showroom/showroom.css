@@ -1,0 +1,117 @@
+:root {
+  font-family: system-ui, -apple-system, 'PingFang TC', 'Noto Sans TC', sans-serif;
+  color: #222;
+  background: #f5f5f5;
+}
+
+body {
+  margin: 0;
+}
+
+.topbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 24px;
+  padding: 12px 16px;
+  background: #fff;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.topbar h1 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.topbar nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.topbar a {
+  color: #555;
+  text-decoration: none;
+}
+
+.topbar a.active {
+  color: #e4007f;
+  font-weight: 600;
+}
+
+main {
+  padding: 16px;
+}
+
+.variant-section + .variant-section {
+  margin-top: 32px;
+}
+
+.variant-section__header {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+}
+
+.variant-section__header h2 {
+  font-size: 16px;
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.card-page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 24px;
+  align-items: start;
+}
+
+.card-page__stage {
+  width: 220px;
+  margin-top: 16px;
+}
+
+.panel {
+  padding: 16px;
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+}
+
+.panel h2 {
+  margin-top: 0;
+  font-size: 16px;
+}
+
+.panel fieldset {
+  margin: 0 0 12px;
+  border: 1px solid #eee;
+}
+
+.check,
+.field {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin: 4px 0;
+  font-size: 14px;
+}
+
+.field select {
+  max-width: 100%;
+}
+
+.hint {
+  color: #888;
+  font-size: 12px;
+}
+
+@media (max-width: 720px) {
+  .card-page {
+    grid-template-columns: 1fr;
+  }
+}
