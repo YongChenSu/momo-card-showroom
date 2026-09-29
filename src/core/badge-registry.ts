@@ -13,12 +13,15 @@ export type BadgeView = {
   color: string
 }
 
-/** A badge plugin as stored in the registry: its payload schema, the slot it occupies, and its view. */
+/**
+ * A badge plugin as stored in the registry: its payload schema, the slot it occupies, and its view.
+ * `view` returns null when it cannot produce a valid BadgeView (only host-registered plugins do; see external-badge).
+ */
 export type BadgePlugin = {
   type: string
   slot: BadgeSlot
   schema: Schema<unknown>
-  view: (data: unknown) => BadgeView
+  view: (data: unknown) => BadgeView | null
 }
 
 export type BadgeRegistry = ReadonlyMap<string, BadgePlugin>
@@ -92,7 +95,12 @@ const resolveOne = (
     })
     return null
   }
-  return { type: plugin.type, slot: plugin.slot, view: plugin.view(payload.value) }
+  const view = plugin.view(payload.value)
+  if (!view) {
+    report({ code: 'badge.invalid-view', message: `badges[${index}] "${plugin.type}" view did not return a valid badge`, detail: raw })
+    return null
+  }
+  return { type: plugin.type, slot: plugin.slot, view }
 }
 
 /**
