@@ -110,7 +110,7 @@ JavaScript API：`window.MomoCards.configStore`（`getSnapshot` / `subscribe` / 
 
 | Bonus | 實作 |
 |---|---|
-| **Reusable Card Architecture** | 資料（`Product`）與呈現（`CardConfig`）分離；卡片實作統一的 `CardProps` 契約；`cardDefinitions` 為 variant registry，showroom 遍歷而非寫死；同一元件同時服務 showroom 與任意嵌入頁 |
+| **Reusable Card Architecture** | 兩種 variant——`grid`（搜尋結果卡）與 `compact`（首頁「降價好貨」卡）——共用同一份 `Product` 資料與 `CardProps` 契約，只有呈現不同。`cardDefinitions` 為 variant registry：每個 variant 宣告元件、樣式與**實際支援的欄位 / 角標 slot**，showroom 遍歷 registry 而非寫死，調整面板只顯示該 variant 有作用的選項。新增 variant = 一個元件 + 一份 CSS + registry 一筆 |
 | **Schema / Plugin Extensibility** | 角標是 plugin：`{ type, slot, schema, view }`，`view` 回傳宣告式 `{ label, color }`，不綁 React。新增角標 = 新增一個定義，卡片本體零修改。`badges` **逐筆容錯**：未註冊或 payload 不合 schema 的角標被跳過並回報，不影響整張卡。`CardConfig` 帶 `schemaVersion` 預留 migration |
 | **State Consistency Strategy** | ① 同頁單一 store（面板 / 預覽 / 列表 / 所有嵌入卡）② 跨分頁：未做（見下）③ 明確優先序 ④ 所有邊界（localStorage、attribute、面板輸入）經 yup 驗證，失敗套預設並回報 |
 
@@ -153,7 +153,6 @@ Mock 資料**刻意**含未註冊角標（`anniversary`）與格式錯誤的角�
 
 | 項目 | 狀態 | 說明 |
 |---|---|---|
-| `compact` variant（首頁「降價好貨」卡） | ⏳ P1 | registry 已預留，目前暫用 grid 版面 |
 | 對外 `registerBadge()` API + sample 自訂角標 | ⏳ P1 | core 的 `registerBadge` 已完成並測試（拒絕重複 type）；尚未經 embed 對外公開 |
 | `schemaVersion` migration | ⏳ P1 | 欄位已存在；目前版本不符即視為非法、套預設並回報 |
 | React DevTools 實測、分層 lint（`no-restricted-imports`） | ⏳ P1 | 分層目前由 `CLAUDE.md` 規範與 review 把關 |

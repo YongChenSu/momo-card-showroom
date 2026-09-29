@@ -51,7 +51,7 @@
     </p>
 
     <h2>1. 宣告式使用</h2>
-    <p><code>&lt;momo-product-card variant="grid" product='{...}'&gt;</code>：商品資料是 JSON 字串，由元件驗證。</p>
+    <p><code>&lt;momo-product-card variant="grid" product='{...}'&gt;</code>：商品資料是 JSON 字串，由元件驗證。第三張與第一張是同一筆商品資料，只把 <code>variant</code> 換成 <code>compact</code>。</p>
     <div class="row">
       <momo-product-card
         variant="grid"
@@ -60,6 +60,11 @@
       <momo-product-card
         variant="grid"
         product='{"id":"s-002","title":"【範例】經典原味肉乾 300g 家庭號","imageUrl":"./favicon.svg","url":"#s-002","price":350,"priceNote":"from","badges":[{"type":"free-shipping-coupon"},{"type":"ad"}]}'
+      ></momo-product-card>
+      <!-- Same product data, different variant: presentation is the only thing that changes. -->
+      <momo-product-card
+        variant="compact"
+        product='{"id":"s-001","title":"【範例】USB 充電手持風扇 三段風速 靜音款","imageUrl":"./favicon.svg","imageCount":3,"url":"#s-001","price":499,"originalPrice":790,"priceNote":"discounted","promoText":"滿2件再折50元","rating":{"score":4.6,"count":128},"soldCount":2000,"badges":[{"type":"mo-points","percent":5},{"type":"store-tag","kind":"good-store"},{"type":"limited-bonus","percent":10}]}'
       ></momo-product-card>
     </div>
 
