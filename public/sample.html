@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>momo-cards 嵌入範例</title>
+    <!--
+      Embedding needs exactly one script. It registers <momo-product-card> and exposes window.MomoCards.
+      Build it first: `pnpm build:embed` (outputs public/embed/momo-cards.js).
+    -->
+    <script src="./embed/momo-cards.js" defer></script>
+    <style>
+      /* Host page styles. The cards live in Shadow DOM, so none of this leaks into them. */
+      body {
+        margin: 0 auto;
+        max-width: 960px;
+        padding: 16px;
+        font-family: system-ui, -apple-system, 'PingFang TC', sans-serif;
+        color: #333;
+      }
+      h2 {
+        margin-top: 32px;
+        font-size: 18px;
+      }
+      p,
+      li {
+        font-size: 14px;
+        line-height: 1.6;
+      }
+      code {
+        background: #f3f3f3;
+        padding: 0 4px;
+      }
+      .row {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 12px;
+      }
+      /* Deliberately hostile host rules: they must not affect the cards. */
+      article,
+      img {
+        border: 3px dashed red !important;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>momo-cards 嵌入範例</h1>
+    <p>
+      這個頁面只載入 <code>embed/momo-cards.js</code> 一支 script，然後以 HTML 屬性宣告卡片。
+      頁面刻意設定了 <code>article, img { border: 3px dashed red !important }</code>，卡片不受影響——樣式隔離在 Shadow DOM 內。
+    </p>
+
+    <h2>1. 宣告式使用</h2>
+    <p><code>&lt;momo-product-card variant="grid" product='{...}'&gt;</code>：商品資料是 JSON 字串，由元件驗證。</p>
+    <div class="row">
+      <momo-product-card
+        variant="grid"
+        product='{"id":"s-001","title":"【範例】USB 充電手持風扇 三段風速 靜音款","imageUrl":"./favicon.svg","imageCount":3,"url":"#s-001","price":499,"originalPrice":790,"priceNote":"discounted","promoText":"滿2件再折50元","rating":{"score":4.6,"count":128},"soldCount":2000,"badges":[{"type":"mo-points","percent":5},{"type":"store-tag","kind":"good-store"},{"type":"limited-bonus","percent":10}]}'
+      ></momo-product-card>
+      <momo-product-card
+        variant="grid"
+        product='{"id":"s-002","title":"【範例】經典原味肉乾 300g 家庭號","imageUrl":"./favicon.svg","url":"#s-002","price":350,"priceNote":"from","badges":[{"type":"free-shipping-coupon"},{"type":"ad"}]}'
+      ></momo-product-card>
+    </div>
+
+    <h2>2. 單張卡片覆寫設定（config 屬性）</h2>
+    <p>
+      優先序：<code>config</code> 屬性 &gt; showroom 儲存的設定 &gt; 預設值。下面這張把價格改為藍色、隱藏評分與銷量、標題限 1 行。
+    </p>
+    <div class="row">
+      <momo-product-card
+        variant="grid"
+        config='{"theme":{"priceColor":"#1565c0","radius":16},"fields":{"rating":false,"soldCount":false},"titleLines":1}'
+        product='{"id":"s-003","title":"【範例】這是一個很長很長的商品標題，用來示範標題行數的設定只顯示一行","imageUrl":"./favicon.svg","url":"#s-003","price":1280,"rating":{"score":4.9,"count":56},"soldCount":300,"badges":[{"type":"mo-points","percent":3}]}'
+      ></momo-product-card>
+    </div>
+
+    <h2>3. 容錯（打開 DevTools console 看 <code>[momo-cards]</code> 訊息）</h2>
+    <ul>
+      <li>第一張：含未註冊的角標 <code>anniversary</code> 與格式錯誤的 <code>mo-points</code>——壞角標被跳過，其餘照常顯示</li>
+      <li>第二張：<code>variant="unknown"</code>——退回 grid</li>
+      <li>第三張：<code>product</code> 不是合法 JSON——不渲染，但不影響頁面其他部分</li>
+    </ul>
+    <div class="row">
+      <momo-product-card
+        variant="grid"
+        product='{"id":"s-004","title":"【範例】角標資料有問題的商品","imageUrl":"./favicon.svg","url":"#s-004","price":199,"badges":[{"type":"anniversary","year":30},{"type":"mo-points","percent":"abc"},{"type":"ad"}]}'
+      ></momo-product-card>
+      <momo-product-card
+        variant="unknown"
+        product='{"id":"s-005","title":"【範例】variant 打錯字","imageUrl":"./favicon.svg","url":"#s-005","price":99,"badges":[]}'
+      ></momo-product-card>
+      <momo-product-card variant="grid" product="{這不是 JSON"></momo-product-card>
+    </div>
+
+    <h2>4. 以 JavaScript 建立 / 共用設定</h2>
+    <p>
+      卡片也可以用 <code>document.createElement</code> 動態建立。<code>window.MomoCards.configStore</code> 是同一份設定 store：
+      更新後頁面上所有同 variant 的卡片即時重繪，並寫入 localStorage（與同網域的 showroom 共用，重新整理後保留）。
+    </p>
+    <p>
+      <button type="button" id="green">grid 價格改綠色</button>
+      <button type="button" id="reset">還原 grid 設定</button>
+    </p>
+    <div class="row" id="dynamic"></div>
+
+    <script>
+      window.addEventListener('DOMContentLoaded', () => {
+        const card = document.createElement('momo-product-card')
+        card.setAttribute('variant', 'grid')
+        card.setAttribute(
+          'product',
+          JSON.stringify({
+            id: 's-006',
+            title: '【範例】由 JavaScript 動態建立的卡片',
+            imageUrl: './favicon.svg',
+            url: '#s-006',
+            price: 2000,
+            originalPrice: 2629,
+            badges: [{ type: 'store-tag', kind: 'mo-store-plus' }],
+          }),
+        )
+        document.getElementById('dynamic').append(card)
+
+        document.getElementById('green').addEventListener('click', () => {
+          window.MomoCards.configStore.update('grid', { theme: { priceColor: '#00a650' } })
+        })
+        document.getElementById('reset').addEventListener('click', () => {
+          window.MomoCards.configStore.reset('grid')
+        })
+      })
+    </script>
+  </body>
+</html>
