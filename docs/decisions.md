@@ -7,7 +7,7 @@
 
 ```
                     ┌──────────────────────── core/（純 TS，無 React）────────────────────────┐
-                    │  Zod schemas: Product / Badge / CardConfig(schemaVersion)               │
+                    │  yup schemas: Product / Badge / CardConfig(schemaVersion)               │
                     │  badge registry（逐筆容錯解析）   config store（subscribe/getSnapshot）   │
                     │  report()（降級事件出口）         config 優先序解析                        │
                     └──────────────▲──────────────────────────────▲───────────────────────────┘
@@ -19,7 +19,7 @@
               showroom/（React app，渲染 custom element）   sample.html（<script type="module">）
 ```
 
-資料流：調整面板 → `store.update(variant, patch)` → Zod 驗證 → 寫入 localStorage → 通知訂閱者 → custom element 重繪。
+資料流：調整面板 → `store.update(variant, patch)` → yup 驗證 → 寫入 localStorage → 通知訂閱者 → custom element 重繪。
 Showroom 與嵌入卡片共用**同一個 store instance**（同一 bundle）。
 
 ---
@@ -57,13 +57,21 @@ Showroom 與嵌入卡片共用**同一個 store instance**（同一 bundle）。
 - **推論（未驗證）**：兩種卡可能共用同一份商品資料，momo 內部實作無法得知。
 - **刻意不做**：圖片輪播（第一張圖 + dot 示意）、list variant、行銷 tile、活動外框。
 
-## D5. Schema 以 Zod 定義，型別由 `z.infer` 推導
+## D5. Schema 以 yup 定義；型別手寫 `type`，schema 標註 `ObjectSchema<T>`
 
-- **理由**：有三個不受信任的輸入邊界——localStorage（舊版 / 壞資料 / 被竄改）、宿主 attribute（手寫 JSON）、調整面板輸入。TS 型別無 runtime 防線。Zod 讓型別與驗證同源。
-- **慣例**：型別一律 `type`，不用 `interface`。
-- **捨棄**：純 TS type（無 runtime 驗證）；JSON Schema + ajv（型別需另生、兩份來源易漂移、體積較大）。
-- **代價**：embed bundle 帶入 Zod runtime（體積**待驗證**）。
-- 版本參考（npm，2026-09-29）：zod 4.6.5、react 19.3.0、vite 8.3.1。
+> 原決策為 Zod（T2、T3 以 Zod 實作），T3 review 時改為 yup。
+
+- **理由**：有三個不受信任的輸入邊界——localStorage（舊版 / 壞資料 / 被竄改）、宿主 attribute（手寫 JSON）、調整面板輸入。TS 型別無 runtime 防線，需要 schema 驗證。
+- **改用 yup 的原因**：候選人較熟悉 yup——與 D2（Lit → React）同一原則：選擇自己能有效審查 agent 產出的工具。
+- **型別寫法**：手寫明確 `type`（一眼可讀結構），schema 以 `yup.ObjectSchema<T>` 標註，由編譯器檢查一致（實測：`badges` 型別不符時 tsc 確實報錯）。檔案順序為 import → type → 邏輯。
+- **實測過的 yup 行為**（yup 1.7.1）：
+  - 巢狀 object 預設值由子欄位自動組出（Zod 4 需 `.prefault()`）
+  - 預設會轉型：`"3"`→`3`、`"false"`→`false`；`.strict()` 可關閉。**採用預設（非 strict）**：資料來源皆為 JSON，轉型風險低；代價是轉型不經過 `report()`
+  - `validateSync` 失敗會 throw → 集中在 `core/validation.ts` 的 `safeValidate` 轉為 `{ ok, value | errors }`
+  - 未知 key 預設保留
+- **捨棄**：Zod（`safeParse` 不 throw、input/output 型別分離較佳，但候選人較不熟）；純 TS type（無 runtime 驗證）；JSON Schema + ajv。
+- **代價**：型別與 schema 欄位需寫兩次（由 `ObjectSchema<T>` 標註防止漂移）；embed bundle 帶入 yup runtime（體積**待驗證**）；切換成本約 15 分鐘。
+- 版本參考（npm，2026-09-29）：yup 1.7.1、react 19.3.0、vite 8.3.1。
 
 ## D6. Badge Plugin 架構：slot + 註冊制 + 逐筆容錯
 
@@ -72,17 +80,23 @@ Showroom 與嵌入卡片共用**同一個 store instance**（同一 bundle）。
 - **Plugin Extensibility**：功能演進與責任邊界——卡片只定義 slot（放哪），plugin 決定放什麼；新增角標 = 新增一個檔案，卡片本體零修改。
 
 ```ts
-type BadgePlugin<S extends z.ZodTypeAny> = {
+type BadgeView = { label: string; color: string }   // 宣告式、純資料、不綁框架
+type BadgePlugin = {
   type: string
-  slot: BadgeSlot            // "image-top-left" | "image-bottom" | "title-prefix" | "price-suffix" ...
-  schema: S
-  render: (data: z.infer<S>) => ReactNode
+  slot: BadgeSlot            // "image-top-left" | "image-bottom-left" | "image-bottom-right" | "title-prefix"
+  schema: Schema<unknown>    // 此角標自己的 payload schema（yup）
+  view: (data: unknown) => BadgeView
 }
+// 泛型只留在 defineBadge<T>()：定義當下讓 view 的 data 依 schema 推導型別；registry / 解析結果皆無泛型
 ```
 
+- **全部角標都是宣告式**（T3 review 時由人提出，取代原本「內建可自訂 render、對外才宣告式」）：內建與外部 `registerBadge` 走同一介面，T11 不需轉換層；`BadgeView` 可序列化、可測試，cards 以單一 `<Badge>` 元件渲染。
+- **代價**：表達力受限（如 momo 的紅色三角「限時加碼」、帶 logo 的 mo點）。演進方式：`BadgeView` 加選填欄位（`shape?`、`icon?`），而非回到 `ReactNode`。
+
 - **容錯**：`badges` 陣列逐筆解析；未註冊或不合 schema → 跳過 + `report()`，其他照常顯示。
-- **對外擴充（選項 A）**：內建 plugin 用完整介面（可自訂 `render`）；對外 `registerBadge()` **只收宣告式資料**（如 `{ type, slot, text, tone }`），不綁 React——維持「宿主不需知道內部是 React」。
+- **對外擴充（選項 A）**：對外 `registerBadge()` 只收宣告式資料，不綁 React——維持「宿主不需知道內部是 React」。（T3 後內建角標也改為宣告式，見上）
 - **捨棄**：B（對外也收 `ReactNode`，宿主須寫 React）；C（只允許 build-time 註冊）。
+- **重複 type**（T3）：拒絕並 `report()`，保留既有 plugin——外部擴充不可靜默覆蓋內建角標。
 - **代價**：registry 需共享可變參照。處理方式：registry 本身 immutable，全系統只有一個受控可變點（module 層級 current registry），已渲染卡片需訂閱變更。
 
 ## D7. 調整介面只調「呈現設定」`CardConfig`
@@ -99,7 +113,7 @@ type BadgePlugin<S extends z.ZodTypeAny> = {
 | ① 同頁 | 調整面板、預覽、列表共用單一 store | ✅ 做 |
 | ② 跨分頁 | `storage` event 同步 | ⏸ 不做（架構預留，約 5 行即可補上） |
 | ③ 優先序 | attribute `config` > store 中該 variant 設定 > schema 預設值 | ✅ 做 |
-| ④ 正確性 | 讀寫皆 Zod parse；失敗套預設 + `report()`；`schemaVersion` migration | ✅ 做 |
+| ④ 正確性 | 讀寫皆 yup 驗證；失敗套預設 + `report()`；`schemaVersion` migration | ✅ 做 |
 
 - **限制（事實）**：localStorage 以 origin 隔離；真實第三方宿主讀不到 showroom 的設定。Production 應改為「showroom 發佈 config 至 API、卡片從 API 讀取」，localStorage 為 demo 替身。
 
@@ -170,7 +184,7 @@ type BadgePlugin<S extends z.ZodTypeAny> = {
 |---|---|---|---|
 | T0 | First commit：assignment / decisions / ai-collaboration / CLAUDE.md | 2 | — |
 | T1 | Scaffold：Vite + React 19 + TS strict + Vitest + oxlint（原規劃 ESLint，改用模板預設） | 8 | `pnpm dev` / `pnpm test` 可跑 |
-| T2 | core：`Product` / `Badge` / `CardConfig` Zod schema（含 `schemaVersion`）+ mock 商品 4~6 筆 | 10 | 型別由 `z.infer` 推導 |
+| T2 | core：`Product` / `Badge` / `CardConfig` schema（含 `schemaVersion`）+ mock 商品 4~6 筆（實作 Zod，T3 review 後改 yup） | 10 | 手寫 type + `ObjectSchema<T>` 標註 |
 | T3 | core：badge registry + 逐筆容錯解析 + `report()` + 測試 | 15 | 未知 / 不合法 badge 被跳過並 warn |
 | T4 | core：config store（load / update / reset）+ 優先序解析 + 測試 | 15 | 參照穩定、壞資料回預設、優先序正確 |
 | T5 | cards：grid variant + 3 個內建 badge plugin + slot 版面 + `?inline` CSS + CSS 變數主題 | 20 | 目視 |

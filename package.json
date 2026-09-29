@@ -19,7 +19,7 @@
   "dependencies": {
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
-    "zod": "^4.6.5"
+    "yup": "^1.7.1"
   },
   "devDependencies": {
     "@types/node": "^24.19.0",

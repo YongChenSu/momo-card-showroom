@@ -49,11 +49,12 @@ examples/ 或 public/
 - 一律 **arrow function**，不使用 `function` 宣告
 - 型別一律用 **`type`**，不使用 `interface`；組合用 `&`
 - 偏好 functional style：純函式、immutable 更新（spread / 新物件），避免 class（Custom Element 因平台要求必須是 class，是唯一例外，且保持為薄 adapter）
-- 資料型別由 Zod 推導：`type X = z.infer<typeof xSchema>`，不要手寫重複型別
+- **型別手寫明確的 `type`**，schema 以 `yup.ObjectSchema<T>` 標註，讓編譯器檢查兩者一致
+- **檔案順序**：import → 型別定義（`type`）→ 常數 / schema / 邏輯
 
 ## 資料與狀態規則
 
-- **Zod 驗證只放在邊界**：localStorage 讀寫、custom element attribute 解析、`registerBadge` 輸入。邊界內信任型別，不做重複的防禦性檢查
+- **yup 驗證只放在邊界**（一律透過 `core/validation.ts` 的 `safeValidate`，不直接 try/catch `validateSync`）：localStorage 讀寫、custom element attribute 解析、`registerBadge` 輸入。邊界內信任型別，不做重複的防禦性檢查
 - **Badge 逐筆容錯解析**：未註冊 type 或不合 schema 的 badge 跳過並 `report()`，不可讓整張卡失敗
 - **Config 優先序**：attribute `config` > store 中該 variant 的設定 > schema 預設值
 - **Config store**（`core/`）：自寫、框架無關，提供 `subscribe` / `getSnapshot` / `update` / `reset`

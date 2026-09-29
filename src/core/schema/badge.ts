@@ -1,23 +1,28 @@
-import { z } from 'zod'
+import * as yup from 'yup'
 
 /**
  * Slots are the only badge concept the card layout knows about.
- * Which badge goes into which slot is decided by badge plugins (see T3 registry).
+ * Which badge goes into which slot is decided by badge plugins (see badge-registry).
  * Derived from observed momo search-result cards (docs/decisions.md D4).
  */
-export const badgeSlots = [
-  'image-top-left', //     e.g. 限時加碼 8%
-  'image-bottom-left', //  e.g. mo點3%、免運券、$190超取免運 (stacked)
-  'image-bottom-right', // e.g. Ad、官方
-  'title-prefix', //       e.g. 店+、好店
-] as const
+export type BadgeSlot =
+  | 'image-top-left' //     e.g. 限時加碼 8%
+  | 'image-bottom-left' //  e.g. mo點3%、免運券、$190超取免運 (stacked)
+  | 'image-bottom-right' // e.g. Ad、官方
+  | 'title-prefix' //       e.g. 店+、好店
 
-export const badgeSlotSchema = z.enum(badgeSlots)
-export type BadgeSlot = z.infer<typeof badgeSlotSchema>
+/** Minimum shape of a raw badge; plugin-specific fields are validated by each plugin's own schema. */
+export type RawBadge = {
+  type: string
+}
 
-/**
- * Minimum shape of a raw badge. Plugin-specific fields are validated by
- * each plugin's own schema; unknown types are skipped, not rejected.
- */
-export const rawBadgeSchema = z.looseObject({ type: z.string().min(1) })
-export type RawBadge = z.infer<typeof rawBadgeSchema>
+export const badgeSlots: readonly BadgeSlot[] = [
+  'image-top-left',
+  'image-bottom-left',
+  'image-bottom-right',
+  'title-prefix',
+]
+
+export const rawBadgeSchema: yup.ObjectSchema<RawBadge> = yup.object({
+  type: yup.string().required(),
+})
