@@ -49,8 +49,29 @@ main {
 
 .variant-section__header {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 16px;
+}
+
+.variant-section__action {
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: #e4007f;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.variant-section__action:hover {
+  background: #b80066;
+}
+
+.variant-section__action:focus-visible {
+  outline: 2px solid #e4007f;
+  outline-offset: 2px;
 }
 
 .variant-section__header h2 {
@@ -65,8 +86,9 @@ main {
 
 .card-page {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 300px;
-  gap: 24px;
+  grid-template-columns: minmax(0, 480px) 300px;
+  justify-content: start;
+  gap: 32px;
   align-items: start;
 }
 

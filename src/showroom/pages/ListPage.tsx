@@ -11,7 +11,9 @@ export const ListPage = () => (
       <section key={variant} className="variant-section">
         <header className="variant-section__header">
           <h2>{cardDefinitions[variant].label}</h2>
-          <Link to={`/cards/${variant}`}>調整此卡 →</Link>
+          <Link className="variant-section__action" to={`/cards/${variant}`}>
+            調整此卡 →
+          </Link>
         </header>
         <div className="card-grid">
           {mockProducts.map((product) => (
