@@ -1,14 +1,19 @@
-import { mockProducts } from '../core/mock/products'
+import { createHashRouter, RouterProvider } from 'react-router'
 import '../embed'
+import { Layout } from './Layout'
+import { CardPage } from './pages/CardPage'
+import { ListPage } from './pages/ListPage'
+import './showroom.css'
 
-/** Temporary smoke page for the embed adapter; T7 replaces it with the list / single-card routes. */
-export const App = () => (
-  <main>
-    <h1>momo Card Showroom</h1>
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 16 }}>
-      {mockProducts.map((product) => (
-        <momo-product-card key={product.id} variant="grid" product={JSON.stringify(product)} />
-      ))}
-    </div>
-  </main>
-)
+// Hash routing (D11): works on the dev server, static hosting and file:// with no rewrite config.
+const router = createHashRouter([
+  {
+    element: <Layout />,
+    children: [
+      { path: '/', element: <ListPage /> },
+      { path: '/cards/:variant', element: <CardPage /> },
+    ],
+  },
+])
+
+export const App = () => <RouterProvider router={router} />
