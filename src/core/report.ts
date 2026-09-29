@@ -7,6 +7,12 @@ export type ReportCode =
   | 'badge.unknown-type'
   | 'badge.invalid-payload'
   | 'badge.duplicate-type'
+  | 'config.invalid-json'
+  | 'config.invalid-stored'
+  | 'config.unknown-variant'
+  | 'config.invalid-update'
+  | 'config.invalid-attribute'
+  | 'config.persist-failed'
 
 export type ReportEvent = {
   code: ReportCode
