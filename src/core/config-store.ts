@@ -1,5 +1,6 @@
-import { cardConfigSchema, cardVariants, type CardConfig, type CardVariant } from './schema/card-config'
+import { CARD_CONFIG_SCHEMA_VERSION, cardConfigSchema, cardVariants, type CardConfig, type CardVariant } from './schema/card-config'
 import { applyPatch, defaultCardConfig, isRecord, type CardConfigPatch } from './card-config'
+import { cardConfigMigrations, migrateConfig } from './config-migration'
 import { consoleReporter, type Reporter } from './report'
 import { safeValidate } from './validation'
 
@@ -20,8 +21,8 @@ export const CONFIG_STORAGE_KEY = 'momo-cards:card-config'
 const isVariant = (key: string): key is CardVariant => (cardVariants as readonly string[]).includes(key)
 
 /**
- * Reads persisted configs, validating each variant independently (D8 ④):
- * corrupt JSON → empty state; an invalid variant is dropped (defaults apply) — both reported.
+ * Reads persisted configs, migrating then validating each variant independently (D8 ④):
+ * corrupt JSON → empty state; an unmigratable or invalid variant is dropped (defaults apply) — all reported.
  */
 export const loadConfigState = (storage: KeyValueStorage, key: string, report: Reporter): ConfigState => {
   const text = storage.getItem(key)
@@ -42,7 +43,12 @@ export const loadConfigState = (storage: KeyValueStorage, key: string, report: R
       report({ code: 'config.unknown-variant', message: `dropping stored config for unknown variant "${variant}"` })
       return state
     }
-    const result = safeValidate(cardConfigSchema, value)
+    const migrated = migrateConfig(value, CARD_CONFIG_SCHEMA_VERSION, cardConfigMigrations)
+    if (!migrated.ok) {
+      report({ code: 'config.unsupported-version', message: `stored config for "${variant}" cannot be migrated; using defaults`, detail: migrated.reason })
+      return state
+    }
+    const result = safeValidate(cardConfigSchema, migrated.value)
     if (!result.ok) {
       report({ code: 'config.invalid-stored', message: `stored config for "${variant}" is invalid; using defaults`, detail: result.errors })
       return state

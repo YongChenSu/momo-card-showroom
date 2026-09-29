@@ -124,14 +124,14 @@ MomoCards.registerBadge({
 | Bonus | 實作 |
 |---|---|
 | **Reusable Card Architecture** | 兩種 variant——`grid`（搜尋結果卡）與 `compact`（首頁「降價好貨」卡）——共用同一份 `Product` 資料與 `CardProps` 契約，只有呈現不同。`cardDefinitions` 為 variant registry：每個 variant 宣告元件、樣式與**實際支援的欄位 / 角標 slot**，showroom 遍歷 registry 而非寫死，調整面板只顯示該 variant 有作用的選項。新增 variant = 一個元件 + 一份 CSS + registry 一筆 |
-| **Schema / Plugin Extensibility** | 角標是 plugin：`{ type, slot, schema, view }`，`view` 回傳宣告式 `{ label, color }`，不綁 React。新增角標 = 新增一個定義，卡片本體零修改；宿主頁也能以 `MomoCards.registerBadge` 在執行期註冊（輸入與 `view` 回傳值都經驗證，`view` 丟錯只跳過該角標）。`badges` **逐筆容錯**：未註冊或 payload 不合 schema 的角標被跳過並回報，不影響整張卡。`CardConfig` 帶 `schemaVersion` 預留 migration |
+| **Schema / Plugin Extensibility** | 角標是 plugin：`{ type, slot, schema, view }`，`view` 回傳宣告式 `{ label, color }`，不綁 React。新增角標 = 新增一個定義，卡片本體零修改；宿主頁也能以 `MomoCards.registerBadge` 在執行期註冊（輸入與 `view` 回傳值都經驗證，`view` 丟錯只跳過該角標）。`badges` **逐筆容錯**：未註冊或 payload 不合 schema 的角標被跳過並回報，不影響整張卡。`CardConfig` 帶 `schemaVersion`：讀取 localStorage 時先逐版 migration 再驗證，舊版資料升級而非被重設；來自較新版本、無法降版的資料則丟棄並回報 |
 | **State Consistency Strategy** | ① 同頁單一 store（面板 / 預覽 / 列表 / 所有嵌入卡）② 跨分頁：未做（見下）③ 明確優先序 ④ 所有邊界（localStorage、attribute、面板輸入）經 yup 驗證，失敗套預設並回報 |
 
 ### Observability：不可靜默失敗
 
 所有降級行為集中經 `report(event)`（`src/core/report.ts`），目前輸出 `console.warn`，前綴 `[momo-cards]`，是日後接 Sentry / Rollbar 的單一接入點。事件代碼：
 
-`badge.invalid-shape` · `badge.unknown-type` · `badge.invalid-payload` · `badge.duplicate-type` · `badge.invalid-plugin` · `badge.invalid-view` · `config.invalid-json` · `config.invalid-stored` · `config.unknown-variant` · `config.invalid-update` · `config.invalid-attribute` · `config.persist-failed` · `element.invalid-json` · `element.invalid-product` · `element.unknown-variant`
+`badge.invalid-shape` · `badge.unknown-type` · `badge.invalid-payload` · `badge.duplicate-type` · `badge.invalid-plugin` · `badge.invalid-view` · `config.invalid-json` · `config.invalid-stored` · `config.unsupported-version` · `config.unknown-variant` · `config.invalid-update` · `config.invalid-attribute` · `config.persist-failed` · `element.invalid-json` · `element.invalid-product` · `element.unknown-variant`
 
 Mock 資料**刻意**含未註冊角標（`anniversary`）與格式錯誤的角標（`mo-points` 的 `percent: "abc"`），開啟 console 即可看到容錯行為。
 
@@ -151,7 +151,7 @@ Mock 資料**刻意**含未註冊角標（`anniversary`）與格式錯誤的角�
 | 預覽方式（D12） | Showroom 也渲染 custom element | 預覽與嵌入同一路徑；React DevTools 可見性待實測 |
 | Embed 格式 | **IIFE**（`window.MomoCards`）而非 ES module | Vite 對 ES library build 強制不壓縮空白（364 KB → 272 KB）；IIFE 佔用一個全域名稱、使用端不能 `import` |
 | 路由（D11） | React Router **hash** 模式 | 網址帶 `#`；換來本機、靜態託管、直接開檔都不需 rewrite 設定 |
-| 測試（D13） | 只測 `core/`（38 個測試）；UI 以瀏覽器實測 | 無 E2E / visual regression |
+| 測試（D13） | 只測 `core/`（46 個測試）；UI 以瀏覽器實測 | 無 E2E / visual regression |
 
 ### 已知限制（事實）
 
@@ -166,7 +166,6 @@ Mock 資料**刻意**含未註冊角標（`anniversary`）與格式錯誤的角�
 
 | 項目 | 狀態 | 說明 |
 |---|---|---|
-| `schemaVersion` migration | ⏳ P1 | 欄位已存在；目前版本不符即視為非法、套預設並回報 |
 | React DevTools 實測、分層 lint（`no-restricted-imports`） | ⏳ P1 | 分層目前由 `CLAUDE.md` 規範與 review 把關 |
 | 跨分頁同步（`storage` event） | ✗ 刻意延後 | store 架構已預留，約數行可補 |
 | E2E / 元件測試 / visual regression | ✗ 刻意不做 | 時間投入 core 測試；UI 以瀏覽器實測 |

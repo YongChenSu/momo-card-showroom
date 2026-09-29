@@ -11,6 +11,7 @@ export type ReportCode =
   | 'badge.invalid-view'
   | 'config.invalid-json'
   | 'config.invalid-stored'
+  | 'config.unsupported-version'
   | 'config.unknown-variant'
   | 'config.invalid-update'
   | 'config.invalid-attribute'
