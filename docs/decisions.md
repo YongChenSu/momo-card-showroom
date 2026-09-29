@@ -113,7 +113,7 @@ type BadgePlugin<S extends z.ZodTypeAny> = {
 ## D10. 單一 Vite 專案 + 資料夾分層
 
 - **決策**：不拆 monorepo。`vite build`（showroom）+ `vite build --config vite.embed.config.ts`（library mode → `momo-cards.js`，React 打包進去）。
-- **分層規則**：見 `CLAUDE.md`；時間允許以 ESLint `no-restricted-imports` 自動檢查。
+- **分層規則**：見 `CLAUDE.md`；時間允許以 lint 的 `no-restricted-imports` 自動檢查（實作時改用 oxlint，見 T1 備註）。
 - **捨棄**：pnpm workspace monorepo（package.json 邊界更硬，但設定成本 20~30 分鐘）。資料夾邊界設計成未來可直接搬為 package。
 
 ## D11. Showroom 以 variant 為單位；頁面與路由
@@ -169,7 +169,7 @@ type BadgePlugin<S extends z.ZodTypeAny> = {
 | # | Task | 預估（分） | 驗證 |
 |---|---|---|---|
 | T0 | First commit：assignment / decisions / ai-collaboration / CLAUDE.md | 2 | — |
-| T1 | Scaffold：Vite + React 19 + TS strict + Vitest + ESLint | 8 | `pnpm dev` / `pnpm test` 可跑 |
+| T1 | Scaffold：Vite + React 19 + TS strict + Vitest + oxlint（原規劃 ESLint，改用模板預設） | 8 | `pnpm dev` / `pnpm test` 可跑 |
 | T2 | core：`Product` / `Badge` / `CardConfig` Zod schema（含 `schemaVersion`）+ mock 商品 4~6 筆 | 10 | 型別由 `z.infer` 推導 |
 | T3 | core：badge registry + 逐筆容錯解析 + `report()` + 測試 | 15 | 未知 / 不合法 badge 被跳過並 warn |
 | T4 | core：config store（load / update / reset）+ 優先序解析 + 測試 | 15 | 參照穩定、壞資料回預設、優先序正確 |

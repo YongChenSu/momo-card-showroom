@@ -13,17 +13,19 @@ momo **Merchant Card Showroom**（題目 B）：分析 momo 商品卡並建立�
 
 ## 指令
 
-> Scaffold（T1）完成後以實際 `package.json` 為準更新本段。
-
 ```bash
 pnpm install
 pnpm dev          # showroom dev server
-pnpm test         # vitest（僅 core/）
-pnpm lint
-pnpm typecheck    # tsc --noEmit
-pnpm build        # showroom app
-pnpm build:embed  # momo-cards.js（Vite library mode）
+pnpm test         # vitest run（僅 src/core/**/*.test.ts）
+pnpm test:watch
+pnpm typecheck    # tsc -b
+pnpm lint         # oxlint
+pnpm build        # tsc -b && vite build（showroom app）
+# pnpm build:embed  # momo-cards.js（Vite library mode）—— T8 加入
 ```
+
+- Lint 使用 **oxlint**（Vite react-ts 模板預設），非 ESLint；分層檢查（T13）以 oxlint 的 `no-restricted-imports` 實作
+- TS 開啟 `strict`、`noUncheckedIndexedAccess`、`erasableSyntaxOnly`（禁止 enum / namespace / parameter properties）
 
 ## 架構分層與 import 規則（必須遵守）
 

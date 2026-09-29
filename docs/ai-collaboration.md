@@ -51,3 +51,4 @@
 | Task | 交付內容 | 驗證方式 | 人的修正 / 備註 | Commit |
 |---|---|---|---|---|
 | T0 | First commit：Phase 1 產出（assignment / decisions / ai-collaboration / CLAUDE.md） | 人已於 Phase 1 結束時 review 三份文件 | — | `docs: add assignment and Phase 1 design decisions` |
+| T1 | Scaffold：Vite 8 + React 19 + TS 6 strict + Vitest 5 + oxlint；`src/{core,cards,embed,showroom}` 分層目錄 | `typecheck` / `test` / `lint` / `build` 全過；dev server 回應正確 title | 模板預設 oxlint 而非規劃的 ESLint → 採用（更快、零設定），分層規則改用 oxlint 實作；`@types/node` 由 26 降為 24 以對齊 runtime；額外開啟 `noUncheckedIndexedAccess`。驗證 dev server 時 agent 誤用已被佔用的 port（另一個本機服務），改用空閒 port 重驗 | `chore: scaffold Vite + React + TS + Vitest project` |
