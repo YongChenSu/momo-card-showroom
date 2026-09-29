@@ -2,11 +2,16 @@ import { cardDefinitions, type CardField } from '../../cards'
 import type { BadgeSlot } from '../../core/schema/badge'
 import type { CardVariant } from '../../core/schema/card-config'
 import { configStore } from '../../embed'
+import type { ProductCoverage } from '../product-coverage'
 import { useCardConfig } from '../use-card-config'
 
 type ConfigPanelProps = {
   variant: CardVariant
+  /** What the previewed product has data for; toggles outside it are marked, since they show no change. */
+  coverage?: ProductCoverage
 }
+
+const NO_DATA_HINT = '（預覽商品無此資料）'
 
 const FIELD_LABELS: Record<CardField, string> = {
   originalPrice: '原價',
@@ -26,7 +31,7 @@ const SLOT_LABELS: Record<BadgeSlot, string> = {
  * Writes go through store.update (validated + persisted); the panel re-reads the store,
  * so what it shows is always what was accepted — never local component state.
  */
-export const ConfigPanel = ({ variant }: ConfigPanelProps) => {
+export const ConfigPanel = ({ variant, coverage }: ConfigPanelProps) => {
   const config = useCardConfig(variant)
   // Only offer what this variant renders, so no toggle is a silent no-op.
   const { fields, slots } = cardDefinitions[variant]
@@ -45,6 +50,7 @@ export const ConfigPanel = ({ variant }: ConfigPanelProps) => {
               onChange={(event) => configStore.update(variant, { fields: { [key]: event.target.checked } })}
             />
             {FIELD_LABELS[key]}
+            {coverage && !coverage.fields.has(key) && <span className="hint">{NO_DATA_HINT}</span>}
           </label>
         ))}
       </fieldset>
@@ -59,6 +65,7 @@ export const ConfigPanel = ({ variant }: ConfigPanelProps) => {
               onChange={(event) => configStore.update(variant, { slots: { [slot]: event.target.checked } })}
             />
             {SLOT_LABELS[slot]}
+            {coverage && !coverage.slots.has(slot) && <span className="hint">{NO_DATA_HINT}</span>}
           </label>
         ))}
       </fieldset>
