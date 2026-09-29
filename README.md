@@ -154,13 +154,13 @@ Mock 資料**刻意**含未註冊角標（`anniversary`）與格式錯誤的角�
 
 | 決策 | 選擇 | 主要代價 |
 |---|---|---|
-| 卡片技術（D2） | **React**，自寫薄 adapter 包成 Custom Element | 嵌入 bundle 含 React：**272 KB / gzip 85 KB**（實測）；每張卡一個 React root。原本建議 Lit（~5 KB），但選擇「自己能有效審查 agent 產出的技術」 |
+| 卡片技術（D2） | **React**，自寫薄 adapter 包成 Custom Element | 嵌入 bundle 含 React：**275 KB / gzip 86 KB**（實測，`dev` @ `6390f05`）；每張卡一個 React root。原本建議 Lit（~5 KB），但選擇「自己能有效審查 agent 產出的技術」 |
 | Adapter（D3） | 自寫（評估過 `@r2wc/react-to-web-component`） | 型別轉換自己處理；r2wc 不處理 shadow root 樣式注入 |
 | Schema（D5） | **yup**，型別手寫 `type`，schema 標註 `ObjectSchema<T>` 讓編譯器檢查一致 | 型別與 schema 寫兩次；yup 預設會轉型（`"3"`→`3`），轉型不經過 `report()` |
 | Store（D9） | 自寫、框架無關（約 100 行），React 端 `useSyncExternalStore` | 需自守規則：snapshot 參照穩定、selector 不產生新物件 |
 | 可調整範圍（D7） | 只調「呈現設定」`CardConfig`（per variant），商品內容固定 mock | 無法在 showroom 編輯商品 |
 | 預覽方式（D12） | Showroom 也渲染 custom element | 預覽與嵌入同一路徑；React DevTools 可見性待實測 |
-| Embed 格式 | **IIFE**（`window.MomoCards`）而非 ES module | Vite 對 ES library build 強制不壓縮空白（364 KB → 272 KB）；IIFE 佔用一個全域名稱、使用端不能 `import` |
+| Embed 格式 | **IIFE**（`window.MomoCards`）而非 ES module | Vite 對 ES library build 強制不壓縮空白（T8 時實測：ES 364 KB → IIFE 272 KB）；IIFE 佔用一個全域名稱、使用端不能 `import` |
 | 路由（D11） | React Router **hash** 模式 | 網址帶 `#`；換來本機、靜態託管、直接開檔都不需 rewrite 設定 |
 | 測試（D13） | 只測 `core/`（46 個測試）；UI 以瀏覽器實測 | 無 E2E / visual regression |
 
@@ -171,13 +171,39 @@ Mock 資料**刻意**含未註冊角標（`anniversary`）與格式錯誤的角�
 
 ---
 
+## 交付狀態
+
+Phase 2 自 first commit（15:19）起算，依「第 95 分鐘（16:54）停止功能開發」的時間盒收尾。
+
+| 範圍 | 狀態 |
+|---|---|
+| **P0**（T0–T9）：core schema / badge registry / config store、grid 卡、custom element、showroom、sample.html + embed build、README | ✅ 完成（PR #1） |
+| **P1**（T10–T12）：compact 卡 + variant 能力宣告、`registerBadge` 對外 API、`schemaVersion` migration | ✅ 完成（PR #2） |
+| 試用回報的修正：點卡片出現 404、欄位開關看不出變化 | ✅ 完成（PR #2） |
+| Showroom 列表頁連結與單卡頁版面調整 | ✅ 完成（PR #3） |
+| **P1**（T13）：React DevTools 實測、分層 lint | ✗ 未完成（見下表） |
+| **P2**：部署、CI、跨分頁同步等 | ✗ 刻意不做，列入演進方向 |
+
+收尾驗證（乾淨 clone `dev` @ `6390f05`）：`pnpm install` → `pnpm test`（6 檔 46 passed）→ `typecheck` → `lint` → `pnpm build` 全部通過，`dist/` 含 showroom、`sample.html` 與 `embed/momo-cards.js`。
+
+### 尚未驗證的假設
+
+- React DevTools 是否能看到 shadow root 內的卡片 React 樹（D12）
+- React 19 對 custom element **property**（非 attribute）的傳遞行為——目前一律傳 JSON 字串 attribute，未依賴此行為
+
+### 已知行為
+
+- 每次 `registerBadge` 成功，所有卡片重新解析角標，mock 中刻意的壞角標會再回報一次（內容正確、訊息重複；可於 reporter 端去重）
+- Mock 中沒有一筆商品涵蓋全部 8 個調整選項（最多 5 個），單卡頁以「（預覽商品無此資料）」標示
+
 ## 刻意不做 / 尚未完成
 
 依優先度排程（P0 → P1 → P2），詳見 [`docs/decisions.md`](docs/decisions.md) 的 Task List。
 
 | 項目 | 狀態 | 說明 |
 |---|---|---|
-| React DevTools 實測、分層 lint（`no-restricted-imports`） | ⏳ P1 | 分層目前由 `CLAUDE.md` 規範與 review 把關 |
+| React DevTools 實測、分層 lint（`no-restricted-imports`） | ✗ 時間盒內未完成（P1 最後一項） | 分層目前由 `CLAUDE.md` 規範與 review 把關；收尾時以 grep 檢查四條 import 規則，**目前無違反**，但沒有自動防線 |
+| Vercel 部署、CI | ✗ 未做（P2） | `dist/` 為純靜態、hash 路由無需 rewrite，部署成本低 |
 | 跨分頁同步（`storage` event） | ✗ 刻意延後 | store 架構已預留，約數行可補 |
 | E2E / 元件測試 / visual regression | ✗ 刻意不做 | 時間投入 core 測試；UI 以瀏覽器實測 |
 | 圖片輪播、list variant、行銷 tile、活動外框 | ✗ 刻意不做 | 以第一張圖 + 圖數點示意 |

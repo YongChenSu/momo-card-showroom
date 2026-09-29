@@ -41,10 +41,10 @@
 
 ### 標示為「待驗證」的假設（Phase 2 需實測）
 
-- React DevTools 能否看到 shadow root 內的卡片 React 樹（D12）
-- React 19 對 custom element property 的傳遞行為（D12）
-- embed bundle 體積（React + Zod）（D2、D5）
-- `Co-Authored-By` trailer 格式與 Claude Code 官方慣例一致（D14）
+- React DevTools 能否看到 shadow root 內的卡片 React 樹（D12）——**未驗證**（T13 未在時間盒內完成）
+- React 19 對 custom element property 的傳遞行為（D12）——**未驗證**；實作改為一律傳 JSON 字串 attribute，不依賴此行為
+- embed bundle 體積（React + yup）（D2、D5）——**已實測**：275 KB / gzip 86 KB（IIFE，`dev` @ `6390f05`）
+- `Co-Authored-By` trailer 格式與 Claude Code 官方慣例一致（D14）——**未查證**；另有一個 commit（`d6dc56e`）的 `Claude-Session` 與其餘不同，未改寫歷史
 
 ## Phase 2 — Implementation
 
@@ -67,3 +67,4 @@
 | T12 | core `config-migration.ts`：`migrateConfig`（依 `schemaVersion` 逐版升級並標記新版本；缺 `schemaVersion` 視為 v0；非整數 / 較新版本 / 缺步驟則失敗）、`cardConfigMigrations`（正式表：`0 → 1`）；`loadConfigState` 於 yup 驗證**前**先 migration，失敗回報 `config.unsupported-version` 並僅丟棄該 variant | 先寫 8 個測試再實作（共 46）：以假的 v1→v2→v3 歷史驗證逐步升級與重新命名欄位、目前版本回傳同一參照、v0 補版本、三種失敗情境、`loadConfigState` 整合（舊資料保留、新版本資料丟棄且其他 variant 不受影響）；typecheck / lint 通過 | 目前沒有真實的格式變更，因此正式表只有 `0 → 1`，逐版升級邏輯以假歷史驗證（誠實標示於註解與測試）。較新版本資料採「丟棄 + 回報」而非嘗試相容——降版無法保證正確 | `feat(core): add schemaVersion migration for stored config` |
 | fix | 人回報 bug：showroom 點卡片 → React Router 預設 404。原因：mock `url` 為 `#p-fan-002`，被 hash 路由當成路徑。修正：mock / sample 的 `url` 改 `/goods/<id>`；加 catch-all 與 `errorElement`（`NotFoundPage`）；README 說明兩個 demo 入口與同源前提 | 瀏覽器實測：`/#p-fan-002` 顯示「找不到頁面」+ 回列表；卡片連結為 `/goods/…`；typecheck / lint / 46 測試通過 | **Agent 說錯被實測糾正**：選項說明宣稱點擊後由 catch-all 顯示找不到頁面，實測為 Vite SPA fallback 回傳 `index.html` → 列表頁；如實更正後由人選擇維持現狀並寫入 README。人另外追問兩個 demo URL 的差異 → README 補上對應題目需求與「勿用 `file://`（不同源）」 | `fix(showroom): avoid hash-router 404 when clicking a card link` |
 | fix | 人回報：勾選「原價」「圖片左上角標」沒有作用。Agent 實測查明 checkbox 與 store 皆正常（換成有該資料的商品即生效），原因是預設預覽商品 `p-fan-001` 本身無原價、無左上角標——屬 UX 問題。修正：`product-coverage.ts` 計算商品有資料的欄位 / slot（只查 registry 的 slot，不驗證 payload，不觸發 report）；預設預覽改為涵蓋最多選項的商品；面板對預覽商品無資料的選項標示「（預覽商品無此資料）」 | 瀏覽器實測：切換 `p-fan-001` 時標示原價 / 評分 / 總銷量 / 左上角標；預設商品改為 `p-fan-002`；typecheck / lint / 46 測試通過 | 先驗證再修：agent 沒有直接改 checkbox，而是先比對兩筆商品確認是資料缺漏。**限制**：mock 中沒有任何一筆商品涵蓋全部 8 個選項（最多 5 個），預設商品仍會有 3 個選項被標示 | `fix(showroom): show which toggles the preview product has no data for` |
+| 收尾 | 16:54 停止功能開發：README 新增「交付狀態」（P0 / P1 完成範圍、未完成的 T13、未驗證假設、已知行為），更新 bundle 實測值與未完成清單；本文件標註 Phase 1 待驗證項的最終狀態 | **乾淨 clone `dev` @ `6390f05`**：install → test（6 檔 46 passed）→ typecheck → lint → `pnpm build` 全過；grep 檢查四條分層 import 規則無違反 | 人決定停在 T13 之前、改補文件與完整驗證（遵守 Phase 1 定下的時間盒）。PR #3（showroom 連結與版面）由人在另一個 session 完成 | `docs: record final delivery status in README` |
