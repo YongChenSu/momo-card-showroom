@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "pnpm build:embed && vite",
     "build": "tsc -b && pnpm build:embed && vite build",
     "build:embed": "vite build -c vite.embed.config.ts",
     "preview": "vite preview",
