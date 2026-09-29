@@ -37,6 +37,10 @@ pnpm dev
 | `/#/cards/grid` | 單卡頁：切換預覽商品 + 調整面板（重新整理後設定保留） |
 | `/sample.html` | 嵌入範例：只載入 `embed/momo-cards.js`，以 HTML 屬性宣告卡片 |
 
+Showroom 對應題目的「列出 / 展示商品卡」與「調整介面 + 瀏覽器持久化」；`sample.html` 對應「以 web component 使用商品卡的範例」，模擬第三方網站嵌入。
+
+在 showroom 調整的設定，重新整理 `sample.html` 即可看到——兩者共用 localStorage，**前提是同源**。請用 `http://localhost:5173/sample.html` 開啟，勿以 `file://` 直接開啟 `public/sample.html`（不同 origin 讀不到 showroom 的設定，且新 clone 尚無 `public/embed/`）。
+
 > `pnpm dev` 會先打包嵌入用的 `public/embed/momo-cards.js`（約 1 秒）再啟動 dev server。
 > Showroom 直接使用原始碼（有 HMR）；`sample.html` 使用打包後的檔案——**修改卡片後若要在 sample 看到，需重新執行 `pnpm build:embed`**。
 
@@ -53,6 +57,8 @@ pnpm dev
 | `pnpm preview` | 預覽 `dist/` |
 
 `pnpm build` 之後，`dist/sample.html` 也可以**直接雙擊開啟**（`file://`）——嵌入 bundle 是一般 `<script>`（IIFE），不受 ES module 的 CORS 限制。
+
+卡片上的商品連結（mock 資料為 `/goods/<id>`）模擬「在真實嵌入頁上前往商品頁」；showroom 沒有商品頁，dev / preview 下會回到列表頁，部署後為 404。
 
 ---
 
