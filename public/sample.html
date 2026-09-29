@@ -5,10 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>momo-cards 嵌入範例</title>
     <!--
-      Embedding needs exactly one script. It registers <momo-product-card> and exposes window.MomoCards.
+      Embedding needs exactly one script. It registers <momo-product-card> and exposes window.MomoCards
+      (configStore, registerBadge). Loaded without defer so the inline registration below can use it immediately.
       Build it first: `pnpm build:embed` (outputs public/embed/momo-cards.js).
     -->
-    <script src="./embed/momo-cards.js" defer></script>
+    <script src="./embed/momo-cards.js"></script>
+    <script>
+      // Custom badge registered before any card renders: declarative, no React needed on the host.
+      MomoCards.registerBadge({
+        type: 'double-11',
+        slot: 'image-top-left',
+        view: (data) => ({ label: `雙11 ${data.discount}折`, color: '#7b1fa2' }),
+      })
+    </script>
     <style>
       /* Host page styles. The cards live in Shadow DOM, so none of this leaks into them. */
       body {
@@ -51,15 +60,20 @@
     </p>
 
     <h2>1. 宣告式使用</h2>
-    <p><code>&lt;momo-product-card variant="grid" product='{...}'&gt;</code>：商品資料是 JSON 字串，由元件驗證。</p>
+    <p><code>&lt;momo-product-card variant="grid" product='{...}'&gt;</code>：商品資料是 JSON 字串，由元件驗證。第三張與第一張是同一筆商品資料，只把 <code>variant</code> 換成 <code>compact</code>。</p>
     <div class="row">
       <momo-product-card
         variant="grid"
-        product='{"id":"s-001","title":"【範例】USB 充電手持風扇 三段風速 靜音款","imageUrl":"./favicon.svg","imageCount":3,"url":"#s-001","price":499,"originalPrice":790,"priceNote":"discounted","promoText":"滿2件再折50元","rating":{"score":4.6,"count":128},"soldCount":2000,"badges":[{"type":"mo-points","percent":5},{"type":"store-tag","kind":"good-store"},{"type":"limited-bonus","percent":10}]}'
+        product='{"id":"s-001","title":"【範例】USB 充電手持風扇 三段風速 靜音款","imageUrl":"./favicon.svg","imageCount":3,"url":"/goods/s-001","price":499,"originalPrice":790,"priceNote":"discounted","promoText":"滿2件再折50元","rating":{"score":4.6,"count":128},"soldCount":2000,"badges":[{"type":"mo-points","percent":5},{"type":"store-tag","kind":"good-store"},{"type":"limited-bonus","percent":10}]}'
       ></momo-product-card>
       <momo-product-card
         variant="grid"
-        product='{"id":"s-002","title":"【範例】經典原味肉乾 300g 家庭號","imageUrl":"./favicon.svg","url":"#s-002","price":350,"priceNote":"from","badges":[{"type":"free-shipping-coupon"},{"type":"ad"}]}'
+        product='{"id":"s-002","title":"【範例】經典原味肉乾 300g 家庭號","imageUrl":"./favicon.svg","url":"/goods/s-002","price":350,"priceNote":"from","badges":[{"type":"free-shipping-coupon"},{"type":"ad"}]}'
+      ></momo-product-card>
+      <!-- Same product data, different variant: presentation is the only thing that changes. -->
+      <momo-product-card
+        variant="compact"
+        product='{"id":"s-001","title":"【範例】USB 充電手持風扇 三段風速 靜音款","imageUrl":"./favicon.svg","imageCount":3,"url":"/goods/s-001","price":499,"originalPrice":790,"priceNote":"discounted","promoText":"滿2件再折50元","rating":{"score":4.6,"count":128},"soldCount":2000,"badges":[{"type":"mo-points","percent":5},{"type":"store-tag","kind":"good-store"},{"type":"limited-bonus","percent":10}]}'
       ></momo-product-card>
     </div>
 
@@ -71,7 +85,7 @@
       <momo-product-card
         variant="grid"
         config='{"theme":{"priceColor":"#1565c0","radius":16},"fields":{"rating":false,"soldCount":false},"titleLines":1}'
-        product='{"id":"s-003","title":"【範例】這是一個很長很長的商品標題，用來示範標題行數的設定只顯示一行","imageUrl":"./favicon.svg","url":"#s-003","price":1280,"rating":{"score":4.9,"count":56},"soldCount":300,"badges":[{"type":"mo-points","percent":3}]}'
+        product='{"id":"s-003","title":"【範例】這是一個很長很長的商品標題，用來示範標題行數的設定只顯示一行","imageUrl":"./favicon.svg","url":"/goods/s-003","price":1280,"rating":{"score":4.9,"count":56},"soldCount":300,"badges":[{"type":"mo-points","percent":3}]}'
       ></momo-product-card>
     </div>
 
@@ -84,11 +98,11 @@
     <div class="row">
       <momo-product-card
         variant="grid"
-        product='{"id":"s-004","title":"【範例】角標資料有問題的商品","imageUrl":"./favicon.svg","url":"#s-004","price":199,"badges":[{"type":"anniversary","year":30},{"type":"mo-points","percent":"abc"},{"type":"ad"}]}'
+        product='{"id":"s-004","title":"【範例】角標資料有問題的商品","imageUrl":"./favicon.svg","url":"/goods/s-004","price":199,"badges":[{"type":"anniversary","year":30},{"type":"mo-points","percent":"abc"},{"type":"ad"}]}'
       ></momo-product-card>
       <momo-product-card
         variant="unknown"
-        product='{"id":"s-005","title":"【範例】variant 打錯字","imageUrl":"./favicon.svg","url":"#s-005","price":99,"badges":[]}'
+        product='{"id":"s-005","title":"【範例】variant 打錯字","imageUrl":"./favicon.svg","url":"/goods/s-005","price":99,"badges":[]}'
       ></momo-product-card>
       <momo-product-card variant="grid" product="{這不是 JSON"></momo-product-card>
     </div>
@@ -104,6 +118,34 @@
     </p>
     <div class="row" id="dynamic"></div>
 
+    <h2>5. 自訂角標（<code>MomoCards.registerBadge</code>）</h2>
+    <p>
+      宿主頁可註冊自己的角標，只需提供 <code>type</code>、<code>slot</code> 與回傳 <code>{ label, color }</code> 的
+      <code>view</code> 函式——不需要 React。卡片本體不用改。
+    </p>
+    <ul>
+      <li>第一張：<code>double-11</code> 在 <code>&lt;head&gt;</code> 就已註冊，一開始即顯示於左上角</li>
+      <li>
+        第二張：<code>flash-sale</code> 尚未註冊，先被跳過並回報；按下按鈕後才註冊，<strong>已渲染的卡片即時補上角標</strong>
+      </li>
+      <li>第三個按鈕：註冊與內建重複的 <code>ad</code>——被拒絕並回報，內建角標不會被覆蓋</li>
+    </ul>
+    <p>
+      <button type="button" id="register-flash">註冊 flash-sale 角標</button>
+      <button type="button" id="register-duplicate">嘗試覆蓋內建 ad 角標</button>
+      <output id="register-result"></output>
+    </p>
+    <div class="row">
+      <momo-product-card
+        variant="grid"
+        product='{"id":"s-007","title":"【範例】雙11 限定 無線吸塵器","imageUrl":"./favicon.svg","url":"/goods/s-007","price":5990,"originalPrice":8990,"badges":[{"type":"double-11","discount":6.6},{"type":"ad"}]}'
+      ></momo-product-card>
+      <momo-product-card
+        variant="grid"
+        product='{"id":"s-008","title":"【範例】限時搶購 氣炸鍋","imageUrl":"./favicon.svg","url":"/goods/s-008","price":1990,"badges":[{"type":"flash-sale","endsAt":"23:59"},{"type":"mo-points","percent":2}]}'
+      ></momo-product-card>
+    </div>
+
     <script>
       window.addEventListener('DOMContentLoaded', () => {
         const card = document.createElement('momo-product-card')
@@ -114,7 +156,7 @@
             id: 's-006',
             title: '【範例】由 JavaScript 動態建立的卡片',
             imageUrl: './favicon.svg',
-            url: '#s-006',
+            url: '/goods/s-006',
             price: 2000,
             originalPrice: 2629,
             badges: [{ type: 'store-tag', kind: 'mo-store-plus' }],
@@ -127,6 +169,24 @@
         })
         document.getElementById('reset').addEventListener('click', () => {
           window.MomoCards.configStore.reset('grid')
+        })
+
+        const result = document.getElementById('register-result')
+        document.getElementById('register-flash').addEventListener('click', () => {
+          const ok = window.MomoCards.registerBadge({
+            type: 'flash-sale',
+            slot: 'image-top-left',
+            view: (data) => ({ label: `限時搶購 至${data.endsAt}`, color: '#ff6f00' }),
+          })
+          result.textContent = ok ? '已註冊 flash-sale' : '註冊失敗（見 console）'
+        })
+        document.getElementById('register-duplicate').addEventListener('click', () => {
+          const ok = window.MomoCards.registerBadge({
+            type: 'ad',
+            slot: 'image-top-left',
+            view: () => ({ label: '偽造', color: '#000' }),
+          })
+          result.textContent = ok ? '已覆蓋 ad（不應發生）' : '已拒絕：ad 是內建角標（見 console）'
         })
       })
     </script>

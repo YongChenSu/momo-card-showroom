@@ -1,5 +1,6 @@
 import { builtinBadgeRegistry } from '../cards'
 import { createConfigStore, type KeyValueStorage } from '../core/config-store'
+import { createBadgeRegistryStore, createExternalBadge } from '../core/external-badge'
 import { consoleReporter } from '../core/report'
 
 /** In-memory fallback when localStorage is unavailable (sandboxed iframe, blocked storage). */
@@ -28,7 +29,16 @@ const resolveStorage = (): KeyValueStorage => {
  */
 export const configStore = createConfigStore(resolveStorage())
 
-/** Built-ins only for now; external registration (T11) will replace this with a mutable reference. */
-export const badgeRegistry = builtinBadgeRegistry
-
 export const report = consoleReporter
+
+/** Starts with the built-ins; hosts extend it through registerBadge. Cards subscribe, so late registration re-renders them. */
+export const badgeRegistryStore = createBadgeRegistryStore(builtinBadgeRegistry, report)
+
+/**
+ * Public API: `MomoCards.registerBadge({ type, slot, view })`. Input is validated at this boundary;
+ * returns false (and reports) when the definition is invalid or the type is already taken.
+ */
+export const registerBadge = (input: unknown): boolean => {
+  const plugin = createExternalBadge(input, report)
+  return plugin ? badgeRegistryStore.register(plugin) : false
+}

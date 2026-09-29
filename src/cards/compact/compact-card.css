@@ -1,0 +1,29 @@
+.card--compact .card__media {
+  border-radius: var(--card-radius);
+  overflow: hidden;
+}
+
+.card--compact {
+  background: transparent;
+}
+
+.card--compact .card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 2px 0;
+}
+
+.card--compact .card__title {
+  font-size: 13px;
+}
+
+.card--compact .card__slot--title {
+  display: inline-flex;
+  margin-right: 4px;
+  vertical-align: 1px;
+}
+
+.card--compact .card__amount {
+  font-size: 16px;
+}
