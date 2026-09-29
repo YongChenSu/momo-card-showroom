@@ -7,6 +7,8 @@ export type ReportCode =
   | 'badge.unknown-type'
   | 'badge.invalid-payload'
   | 'badge.duplicate-type'
+  | 'badge.invalid-plugin'
+  | 'badge.invalid-view'
   | 'config.invalid-json'
   | 'config.invalid-stored'
   | 'config.unknown-variant'

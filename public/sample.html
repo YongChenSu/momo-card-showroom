@@ -5,10 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>momo-cards 嵌入範例</title>
     <!--
-      Embedding needs exactly one script. It registers <momo-product-card> and exposes window.MomoCards.
+      Embedding needs exactly one script. It registers <momo-product-card> and exposes window.MomoCards
+      (configStore, registerBadge). Loaded without defer so the inline registration below can use it immediately.
       Build it first: `pnpm build:embed` (outputs public/embed/momo-cards.js).
     -->
-    <script src="./embed/momo-cards.js" defer></script>
+    <script src="./embed/momo-cards.js"></script>
+    <script>
+      // Custom badge registered before any card renders: declarative, no React needed on the host.
+      MomoCards.registerBadge({
+        type: 'double-11',
+        slot: 'image-top-left',
+        view: (data) => ({ label: `雙11 ${data.discount}折`, color: '#7b1fa2' }),
+      })
+    </script>
     <style>
       /* Host page styles. The cards live in Shadow DOM, so none of this leaks into them. */
       body {
@@ -109,6 +118,34 @@
     </p>
     <div class="row" id="dynamic"></div>
 
+    <h2>5. 自訂角標（<code>MomoCards.registerBadge</code>）</h2>
+    <p>
+      宿主頁可註冊自己的角標，只需提供 <code>type</code>、<code>slot</code> 與回傳 <code>{ label, color }</code> 的
+      <code>view</code> 函式——不需要 React。卡片本體不用改。
+    </p>
+    <ul>
+      <li>第一張：<code>double-11</code> 在 <code>&lt;head&gt;</code> 就已註冊，一開始即顯示於左上角</li>
+      <li>
+        第二張：<code>flash-sale</code> 尚未註冊，先被跳過並回報；按下按鈕後才註冊，<strong>已渲染的卡片即時補上角標</strong>
+      </li>
+      <li>第三個按鈕：註冊與內建重複的 <code>ad</code>——被拒絕並回報，內建角標不會被覆蓋</li>
+    </ul>
+    <p>
+      <button type="button" id="register-flash">註冊 flash-sale 角標</button>
+      <button type="button" id="register-duplicate">嘗試覆蓋內建 ad 角標</button>
+      <output id="register-result"></output>
+    </p>
+    <div class="row">
+      <momo-product-card
+        variant="grid"
+        product='{"id":"s-007","title":"【範例】雙11 限定 無線吸塵器","imageUrl":"./favicon.svg","url":"#s-007","price":5990,"originalPrice":8990,"badges":[{"type":"double-11","discount":6.6},{"type":"ad"}]}'
+      ></momo-product-card>
+      <momo-product-card
+        variant="grid"
+        product='{"id":"s-008","title":"【範例】限時搶購 氣炸鍋","imageUrl":"./favicon.svg","url":"#s-008","price":1990,"badges":[{"type":"flash-sale","endsAt":"23:59"},{"type":"mo-points","percent":2}]}'
+      ></momo-product-card>
+    </div>
+
     <script>
       window.addEventListener('DOMContentLoaded', () => {
         const card = document.createElement('momo-product-card')
@@ -132,6 +169,24 @@
         })
         document.getElementById('reset').addEventListener('click', () => {
           window.MomoCards.configStore.reset('grid')
+        })
+
+        const result = document.getElementById('register-result')
+        document.getElementById('register-flash').addEventListener('click', () => {
+          const ok = window.MomoCards.registerBadge({
+            type: 'flash-sale',
+            slot: 'image-top-left',
+            view: (data) => ({ label: `限時搶購 至${data.endsAt}`, color: '#ff6f00' }),
+          })
+          result.textContent = ok ? '已註冊 flash-sale' : '註冊失敗（見 console）'
+        })
+        document.getElementById('register-duplicate').addEventListener('click', () => {
+          const ok = window.MomoCards.registerBadge({
+            type: 'ad',
+            slot: 'image-top-left',
+            view: () => ({ label: '偽造', color: '#000' }),
+          })
+          result.textContent = ok ? '已覆蓋 ad（不應發生）' : '已拒絕：ad 是內建角標（見 console）'
         })
       })
     </script>
